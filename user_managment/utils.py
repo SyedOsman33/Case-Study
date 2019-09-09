@@ -8,27 +8,25 @@ from user_managment.constants import ERROR_PARAMS_MISSING_BODY
 from .models import UserManagment, PhoneNumbers, Emails
 
 
-
 def exception_handler(def_value=None):
     def decorate(f):
         def applicator(*args, **kwargs):
             try:
                 return f(*args, **kwargs)
             except Exception as err:
+                traceback.print_exc()
                 return def_value
         return applicator
     return decorate
 
-
 def verify_request_params(params):
     def decorator(func):
         def inner(request, *args, **kwargs):
-            if not all(param in request.query_params for param in params):
+            if not all(param in request.query_params or param in request.data for param in params):
                 return generic_response(response_body=ERROR_PARAMS_MISSING_BODY, http_status=200)
             return func(request, *args, **kwargs)
         return inner
     return decorator
-
 
 def generic_response(response_body, http_status=200, header_dict={}, mime='application/json'):
     from django.core.serializers.json import DjangoJSONEncoder
@@ -38,22 +36,19 @@ def generic_response(response_body, http_status=200, header_dict={}, mime='appli
         resp[name] = value
     return resp
 
-
 def get_users_by_name(name):
     users_list = UserManagment.objects.filter(Q(first_name__icontains=name) | Q(last_name__icontains=name))
     print(users_list)
     final_list = [user.to_json() for user in users_list]
     return final_list
 
-
-def get_user_by_id(user_id):
+def get_user_id(user_id):
     try:
         user_obj = UserManagment.objects.get(pk=user_id)
     except UserManagment.DoesNotExist:
         user_obj = None
 
     return user_obj.to_json() or "No User Found"
-
 
 def add_additional_user_contact_info(user_id, user_phone, user_email):
     try:
@@ -92,7 +87,7 @@ def edit_users_contact_info(user_id, email_id, phone_id, new_phone_num, new_emai
 
             return user_obj.to_json()
         except:
-            return False
+            return "Incorrect Param for email or phone"
     else:
         return False
 
@@ -107,7 +102,6 @@ def edit_users_data(user_id, **data):
             return "User Not Found"
     else:
         return False
-
 
 def create_users_data(data):
     try:
@@ -139,7 +133,6 @@ def create_users_data(data):
     except Exception as e:
         traceback.print_exc()
         return False
-
 
 def delete_user_data(user_id):
     if user_id:

@@ -5,6 +5,42 @@ from user_managment.utils import *
 # Create your views here.
 
 
+
+@api_view(['GET'])
+@exception_handler(generic_response(response_body=ERROR_RESPONSE_BODY, http_status=500))
+def get_user_by_id(request, id):
+    response_body = {RESPONSE_MESSAGE: DEFAULT_ERROR_MESSAGE, RESPONSE_DATA: {}}
+    http_status = 500
+
+    user = get_user_id(id)
+
+    if user:
+        http_status = 200
+        response_body[RESPONSE_MESSAGE] = SUCCESS
+        response_body[RESPONSE_DATA] = user
+
+    return generic_response(response_body=response_body, http_status=http_status)
+
+
+@api_view(['GET'])
+@verify_request_params(params=['name'])
+@exception_handler(generic_response(response_body=ERROR_RESPONSE_BODY, http_status=500))
+def find_users_by_name(request):
+    response_body = {RESPONSE_MESSAGE: DEFAULT_ERROR_MESSAGE, RESPONSE_DATA: {}}
+    http_status = 500
+
+    name = request.GET.get("name", None)
+
+    create_user = get_users_by_name(name=name)
+
+    if create_user:
+        http_status = 200
+        response_body[RESPONSE_MESSAGE] = SUCCESS
+        response_body[RESPONSE_DATA] = create_user
+
+    return generic_response(response_body=response_body, http_status=http_status)
+
+
 @api_view(['POST'])
 @verify_request_params(params=['first_name', 'last_name', 'emails', 'phone_numbers'])
 @exception_handler(generic_response(response_body=ERROR_RESPONSE_BODY, http_status=500))
@@ -93,18 +129,17 @@ def add_additional_contact_info(request):
 
 
 @api_view(['DELETE'])
-@verify_request_params(params=['id'])
 @exception_handler(generic_response(response_body=ERROR_RESPONSE_BODY, http_status=500))
-def delete_user(request):
+def delete_user(request, id):
     response_body = {RESPONSE_MESSAGE: DEFAULT_ERROR_MESSAGE, RESPONSE_DATA: {}}
     http_status = 500
 
-    user_id = request.data.get("id", None)
+    # user_id = request.data.get("id", None)
 
-    delete = delete_user_data(user_id=user_id)
+    delete = delete_user_data(user_id=id)
 
     if delete:
         http_status = 200
-        response_body[RESPONSE_MESSAGE] = SUCCESS
+        response_body[RESPONSE_MESSAGE] = delete
 
     return generic_response(response_body=response_body, http_status=http_status)
